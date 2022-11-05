@@ -13,6 +13,7 @@ export const useAudio = () => {
     // create Oscillator and gain node
     const oscillator = context.createOscillator()
     const gainNode = context.createGain()
+    oscillator.type = 'square'
     oscillator.start(10)
     gainNode.connect(context.destination)
     gainNode.gain.value = 0.1
@@ -48,5 +49,6 @@ export const useAudio = () => {
     context,
     oscillator,
     play,
+    isPlaying: playing,
   }
 }

@@ -10,7 +10,7 @@ const Logo = dynamic(() => import('@/components/canvas/Logo'), { ssr: false })
 
 // Dom components go here
 export default function Page(props) {
-  const { play } = useAudio()
+  const { play, isPlaying } = useAudio()
   return (
     <>
       <h1 className='text-lg'>Its a website</h1>
