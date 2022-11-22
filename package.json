@@ -20,6 +20,7 @@
     "react-merge-refs": "^2.0.1",
     "three": "^0.146.0",
     "three-stdlib": "^2.17.3",
+    "tunajs": "^1.0.15",
     "underscore": "^1.13.6"
   },
   "devDependencies": {
