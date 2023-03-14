@@ -12,9 +12,9 @@ export default function Synth(props) {
   }
 
   return (
-    <>
+    <div className='fixed top-0 left-0 z-10 bg-transparent'>
       <h1 onClick={handleStart}>Click here to start</h1>
       {isComplete ? <span>Ready ✅</span> : <span>Loading...</span>}
-    </>
+    </div>
   )
 }
