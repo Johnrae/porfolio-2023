@@ -5,12 +5,13 @@
 
 import { throttle } from 'underscore'
 import Tuna from 'tunajs'
+import { useMouseState } from './useMouseState'
 
 const noteToFrequency = (note: number) => {
   return 440 * Math.pow(2, (note - 69) / 12)
 }
 
-const setupAudio = () => {
+const setupAudio = (mouseDown, mouseUp) => {
   if (!window) return
 
   const context = new AudioContext()
@@ -63,11 +64,12 @@ const setupAudio = () => {
   output.connect(context.destination)
 
   window.addEventListener('mousedown', () => {
-    console.log(oscillator, 'mouse down')
+    mouseDown()
     oscillator.connect(input)
   })
 
   window.addEventListener('mouseup', () => {
+    mouseUp()
     oscillator.disconnect(input)
   })
 
@@ -76,12 +78,10 @@ const setupAudio = () => {
     const { innerWidth, innerHeight } = window
     const x = clientX / innerWidth
     const y = clientY / innerHeight
-    console.log('throttling')
     input.gain.value = x * 0.5
   }, 100)
 
   window.addEventListener('mousemove', (e: any) => {
-    console.log('moving')
     handleMouseMove(e)
   })
 
@@ -169,7 +169,8 @@ const setupAudio = () => {
 }
 
 export const useAudio = () => {
+  const { onMouseDown, onMouseUp } = useMouseState()
   return {
-    setup: setupAudio,
+    setup: () => setupAudio(onMouseDown, onMouseUp),
   }
 }

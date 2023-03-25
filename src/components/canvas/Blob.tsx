@@ -1,5 +1,5 @@
-import { useRef, useState } from 'react'
-import { useCursor, MeshDistortMaterial } from '@react-three/drei'
+import { useEffect, useRef, useState } from 'react'
+import { useCursor, MeshDistortMaterial, MeshWobbleMaterial } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 
 export default function Blob({ ...props }) {
@@ -19,9 +19,14 @@ export default function Blob({ ...props }) {
   })
 
   return (
-    <mesh ref={ref} position={[0, 0, 0.01]} {...props}>
-      <sphereGeometry args={[100, 100, 100]} />
-      <MeshDistortMaterial speed={10} roughness={0} color={'#1fb2f5'} />
+    <mesh
+      onPointerDown={(e) => e.eventObject.scale.set(1.5, 1.5, 1.5)}
+      onPointerUp={(e) => e.eventObject.scale.set(1, 1, 1)}
+      ref={ref}
+      position={[0, 0, 10]}
+      {...props}>
+      <sphereBufferGeometry args={[50, 50, 50]} />
+      <MeshWobbleMaterial color={'#1fb2f5'} />
     </mesh>
   )
 }

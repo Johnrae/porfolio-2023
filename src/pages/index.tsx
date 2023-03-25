@@ -1,5 +1,7 @@
 import dynamic from 'next/dynamic'
 import Scene from '@/components/canvas/Scene'
+import { useMouseState } from '@/hooks/useMouseState'
+import { useEffect } from 'react'
 const Blob = dynamic(() => import('@/components/canvas/Blob'), { ssr: false })
 
 // Dynamic import is used to prevent a payload when the website starts, that includes threejs, r3f etc..

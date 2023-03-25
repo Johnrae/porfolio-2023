@@ -8,6 +8,7 @@ const Scene = dynamic(() => import('@/components/canvas/Scene'), { ssr: true })
 
 export default function App({ Component, pageProps = { title: 'index' } }) {
   const ref = useRef()
+
   return (
     <>
       <Header title={pageProps.title} />
