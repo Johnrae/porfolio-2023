@@ -78,6 +78,7 @@ const setupAudio = (mouseDown, mouseUp) => {
     const { innerWidth, innerHeight } = window
     const x = clientX / innerWidth
     const y = clientY / innerHeight
+    // TODO: Implement kaos pad stuff here
     input.gain.value = x * 0.5
   }, 100)
 

@@ -6,7 +6,7 @@ export default function Scene({ children, ...props }) {
   return (
     <Canvas {...props}>
       {/* @ts-ignore */}
-      <OrthographicCamera makeDefault near={0.01} far={200} position={[0, 0, 110]} />
+      <OrthographicCamera makeDefault near={0} far={200} position={[0, 0, 1]} />
 
       <directionalLight intensity={0.75} />
       <ambientLight intensity={0.75} />

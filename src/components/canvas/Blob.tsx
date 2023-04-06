@@ -20,13 +20,14 @@ export default function Blob({ ...props }) {
 
   return (
     <mesh
-      onPointerDown={(e) => e.eventObject.scale.set(1.5, 1.5, 1.5)}
-      onPointerUp={(e) => e.eventObject.scale.set(1, 1, 1)}
+      onPointerDown={(e) => e.eventObject.scale.set(100, 100, 100)}
+      onPointerUp={(e) => e.eventObject.scale.set(25, 25, 25)}
       ref={ref}
-      position={[0, 0, 10]}
+      position={[0, 0, -125]}
+      scale={[25, 25, 25]}
       {...props}>
-      <sphereBufferGeometry args={[50, 50, 50]} />
-      <MeshWobbleMaterial color={'#1fb2f5'} />
+      <sphereBufferGeometry args={[1, 64, 64]} />
+      <MeshDistortMaterial roughness={0.01} distortionScale={100} distort={0.5} color={'hotpink'} />
     </mesh>
   )
 }
