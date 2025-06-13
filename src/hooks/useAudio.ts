@@ -32,12 +32,12 @@ const setupAudio = (mouseDown, mouseUp) => {
   })
 
   const delay = new tuna.Delay({
-    feedback: 0.45, //0 to 1+
-    delayTime: 100, //1 to 10000 milliseconds
-    wetLevel: 0.5, //0 to 1+
+    feedback: 0.7, //0 to 1+
+    delayTime: 150, //1 to 10000 milliseconds
+    wetLevel: 1, //0 to 1+
     dryLevel: 1, //0 to 1+
     cutoff: 20000, //cutoff frequency of the built in lowpass-filter. 20 to 22050
-    bypass: 0.5,
+    bypass: false,
   })
 
   const bitcrusher = new tuna.Bitcrusher({

@@ -6,7 +6,13 @@ export default function Scene({ children, ...props }) {
   return (
     <Canvas {...props}>
       {/* @ts-ignore */}
-      <OrthographicCamera makeDefault near={0} far={200} position={[0, 0, 1]} />
+      <OrthographicCamera
+        makeDefault
+        near={1}
+        far={1000}
+        position={[0, 0, 5]}
+        zoom={0.5} // Lower zoom makes objects appear larger
+      />
 
       <directionalLight intensity={0.75} />
       <ambientLight intensity={0.75} />
