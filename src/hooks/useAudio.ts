@@ -7,6 +7,9 @@ import { throttle } from 'underscore'
 import Tuna from 'tunajs'
 import { useMouseState } from './useMouseState'
 
+// bottom row of keys
+const keyboard = ['z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.']
+
 const noteToFrequency = (note: number) => {
   return 440 * Math.pow(2, (note - 69) / 12)
 }
@@ -36,7 +39,7 @@ const setupAudio = (mouseDown, mouseUp) => {
     delayTime: 150, //1 to 10000 milliseconds
     wetLevel: 1, //0 to 1+
     dryLevel: 1, //0 to 1+
-    cutoff: 20000, //cutoff frequency of the built in lowpass-filter. 20 to 22050
+    cutoff: 16000, //cutoff frequency of the built in lowpass-filter. 20 to 22050
     bypass: false,
   })
 
@@ -46,10 +49,32 @@ const setupAudio = (mouseDown, mouseUp) => {
     bufferSize: 4096, //256 to 16384
   })
 
-  const output = context.createGain()
-  input.gain.value = 0.1
+  const phaser = new tuna.Phaser({
+    rate: 1.2, // 0.01 to 8 is a decent range, but not limited to it. Default = 1.2
+    depth: 0.3, // 0 to 1. Default = 0.3
+    feedback: 0.2, // 0 to 1+ Default = 0.2
+    stereoPhase: 30, // 0 to 180. Default = 30
+    bypass: 0,
+  })
 
-  oscillator.type = 'square'
+  const tremolo = new tuna.Tremolo({
+    intensity: 0.3, //0 to 1. Default = 0.3
+    rate: 4, //0.1 to 16. Default = 4
+    stereoPhase: 0, //0 to 180. Default = 0
+    bypass: false,
+  })
+
+  const moogFilter = new tuna.MoogFilter({
+    cutoff: 0.065, //0 to 1
+    resonance: 3.5, //0 to 4
+    bufferSize: 8192, //256 to 16384
+  })
+
+  const output = context.createGain()
+  input.gain.value = 0 // Master Volume
+
+  oscillator.type = 'sawtooth'
+  oscillator.connect(input)
   oscillator.start()
 
   input.connect(chorus)
@@ -61,16 +86,33 @@ const setupAudio = (mouseDown, mouseUp) => {
   input.connect(delay)
   delay.connect(output)
 
+  input.connect(phaser)
+  phaser.connect(output)
+
+  input.connect(tremolo)
+  tremolo.connect(output)
+
+  input.connect(moogFilter)
+  moogFilter.connect(output)
+
   output.connect(context.destination)
+
+  const play = () => {
+    input.gain.value = 0.5 // Master Volume
+  }
+
+  const stop = () => {
+    input.gain.value = 0 // Master Volume
+  }
 
   window.addEventListener('mousedown', () => {
     mouseDown()
-    oscillator.connect(input)
+    play()
   })
 
   window.addEventListener('mouseup', () => {
     mouseUp()
-    oscillator.disconnect(input)
+    stop()
   })
 
   const handleMouseMove = throttle((e: MouseEvent) => {
@@ -78,8 +120,31 @@ const setupAudio = (mouseDown, mouseUp) => {
     const { innerWidth, innerHeight } = window
     const x = clientX / innerWidth
     const y = clientY / innerHeight
-    // TODO: Implement kaos pad stuff here
-    input.gain.value = x * 0.5
+
+    // Calculate distance from center in each quadrant (0 to 1)
+    const quadrantNormalized = {
+      x: x > 0.5 ? (x - 0.5) * 2 : Math.abs((x - 0.5) * 2),
+      y: y > 0.5 ? (y - 0.5) * 2 : Math.abs((y - 0.5) * 2),
+    }
+
+    if (x > 0.5 && y < 0.5) {
+      // Top right quadrant
+      delay.feedback = quadrantNormalized.x // Now 0 to 1
+      delay.delayTime = quadrantNormalized.y * 1000
+    } else if (x < 0.5 && y < 0.5) {
+      // Top left quadrant
+      moogFilter.cutoff = quadrantNormalized.x
+      moogFilter.resonance = quadrantNormalized.y * 4
+    } else if (x < 0.5 && y > 0.5) {
+      // Bottom left is bitcrusher, bits on x and bufferSize on y
+      bitcrusher.bits = Math.floor(x * 15) + 1 // Map x to bits (1 to 16)
+      bitcrusher.bufferSize = Math.pow(2, Math.floor((y - 0.5) * 13)) // Map y to bufferSize (256 to 8192)
+    } else if (x > 0.5 && y > 0.5) {
+      // Bottom right is phaser and tremolo, phaser mix on x and tremolo speed and intensity on y
+      phaser.mix = (x - 0.5) * 2 // Map x to phaser mix (0 to 1)
+      tremolo.rate = (y - 0.5) * 15 + 1 // Map y to tremolo speed (1 to 16)
+      tremolo.intensity = (y - 0.5) * 2 // Map y to tremolo intensity (0 to 1)
+    }
   }, 100)
 
   window.addEventListener('mousemove', (e: any) => {
@@ -93,6 +158,7 @@ const setupAudio = (mouseDown, mouseUp) => {
       window.currentNote += 1
       // @ts-ignore
       oscillator.frequency.value = noteToFrequency(window.currentNote)
+      return
     }
 
     if (e.key === 'a') {
@@ -100,14 +166,17 @@ const setupAudio = (mouseDown, mouseUp) => {
       window.currentNote -= 1
       // @ts-ignore
       oscillator.frequency.value = noteToFrequency(window.currentNote)
+      return
     }
 
     if (e.key === 's') {
       oscillator.frequency.value -= 2
+      return
     }
 
     if (e.key === 'd') {
       oscillator.frequency.value += 2
+      return
     }
 
     // Keyboard
@@ -164,9 +233,16 @@ const setupAudio = (mouseDown, mouseUp) => {
       window.currentNote = 62
       oscillator.frequency.value = noteToFrequency(62)
     }
+
+    return play()
   })
 
-  console.log('Audio set up!')
+  window.addEventListener('keyup', (e: any) => {
+    // for any of the bottom row keys, stop playing
+    if (keyboard.includes(e.key)) {
+      stop()
+    }
+  })
 }
 
 export const useAudio = () => {

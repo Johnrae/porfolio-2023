@@ -4,7 +4,11 @@ import { useFrame } from '@react-three/fiber'
 import { useSpring, animated } from '@react-spring/three'
 import { Mesh } from 'three'
 
-export default function Blob({ ...props }) {
+interface BlobProps {
+  [key: string]: any
+}
+
+export default function Blob(props: BlobProps) {
   // Properly type the ref as a Mesh
   const ref = useRef<Mesh>(null)
   const [distortion, setDistortion] = useState(0.5)
