@@ -1,18 +1,16 @@
-import { Canvas } from '@react-three/fiber'
+import { ReactNode } from 'react'
+import { Canvas, CanvasProps } from '@react-three/fiber'
 import { OrthographicCamera, Preload } from '@react-three/drei'
 
-export default function Scene({ children, ...props }) {
+interface SceneProps extends Partial<CanvasProps> {
+  children?: ReactNode
+}
+
+export default function Scene({ children, ...props }: SceneProps) {
   // Everything defined in here will persist between route changes, only children are swapped
   return (
     <Canvas {...props}>
-      {/* @ts-ignore */}
-      <OrthographicCamera
-        makeDefault
-        near={1}
-        far={1000}
-        position={[0, 0, 5]}
-        zoom={0.5} // Lower zoom makes objects appear larger
-      />
+      <OrthographicCamera makeDefault near={1} far={1000} position={[0, 0, 5]} zoom={0.5} />
 
       <directionalLight intensity={0.75} />
       <ambientLight intensity={0.75} />

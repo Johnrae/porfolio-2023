@@ -1,21 +1,19 @@
-import { useRef, forwardRef, ReactNode } from 'react'
+import { useRef, ReactNode, Ref } from 'react'
 import { mergeRefs } from 'react-merge-refs'
 
 interface LayoutProps {
   children: ReactNode
-  [key: string]: any
+  ref?: Ref<HTMLDivElement>
+  [key: string]: unknown
 }
 
-const Layout = forwardRef<HTMLDivElement, LayoutProps>(({ children, ...props }, ref) => {
-  const localRef = useRef<HTMLDivElement>()
+export default function Layout({ children, ref: forwardedRef, ...props }: LayoutProps) {
+  const localRef = useRef<HTMLDivElement>(null)
   return (
     <div
-      ref={mergeRefs([ref, localRef])}
+      ref={mergeRefs([forwardedRef ?? null, localRef])}
       className='absolute top-0 left-0 z-10 w-screen h-screen overflow-hidden dom bg-zinc-900 text-gray-50'>
       {children}
     </div>
   )
-})
-Layout.displayName = 'Layout'
-
-export default Layout
+}

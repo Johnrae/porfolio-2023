@@ -4,6 +4,6 @@
   "editor.codeActionsOnSave": {
     "source.fixAll": "explicit"
   },
-  "eslint.validate": ["javascript"],
+  "eslint.validate": ["javascript", "typescript", "typescriptreact"],
   "eslint.workingDirectories": [{ "mode": "auto" }]
 }

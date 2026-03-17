@@ -3,11 +3,11 @@ import { useState } from 'react'
 export function useMouseState() {
   const [isMouseDown, setIsMouseDown] = useState(false)
 
-  const onMouseDown = (event: React.MouseEvent) => {
+  const onMouseDown = () => {
     setIsMouseDown(true)
   }
 
-  const onMouseUp = (event: React.MouseEvent) => {
+  const onMouseUp = () => {
     setIsMouseDown(false)
   }
 

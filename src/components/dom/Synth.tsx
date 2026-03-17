@@ -1,19 +1,27 @@
 import { useAudio } from '@/hooks/useAudio'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
-// Dom components go here
-export default function Synth(props) {
+export default function Synth() {
   const { setup } = useAudio()
   const [isComplete, setIsComplete] = useState(false)
+  const cleanupRef = useRef<(() => void) | null>(null)
+
+  useEffect(() => {
+    return () => {
+      cleanupRef.current?.()
+    }
+  }, [])
 
   function handleStart() {
-    setup()
+    cleanupRef.current = setup()
     setIsComplete(true)
   }
 
   return (
     <div className='fixed top-0 left-0 z-10 bg-transparent'>
-      <h1 onClick={handleStart}>Click here to start</h1>
+      <button onClick={handleStart} className='cursor-pointer'>
+        Click here to start
+      </button>
       {isComplete ? <span>Ready ✅</span> : <span>Loading...</span>}
     </div>
   )

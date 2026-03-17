@@ -1,7 +1,6 @@
 import dynamic from 'next/dynamic'
 import Scene from '@/components/canvas/Scene'
-import { useMouseState } from '@/hooks/useMouseState'
-import { useEffect } from 'react'
+
 const Blob = dynamic(() => import('@/components/canvas/Blob'), { ssr: false })
 
 // Dynamic import is used to prevent a payload when the website starts, that includes threejs, r3f etc..
@@ -10,8 +9,7 @@ const Blob = dynamic(() => import('@/components/canvas/Blob'), { ssr: false })
 // https://github.com/pmndrs/react-three-next/issues/49
 const Synth = dynamic(() => import('@/components/dom/Synth'), { ssr: false })
 
-// Dom components go here
-export default function Page(props) {
+export default function Page() {
   return (
     <>
       <div className='fixed top-0 left-0 z-0 w-screen h-screen'>
@@ -28,10 +26,6 @@ export default function Page(props) {
     </>
   )
 }
-
-// Canvas components go here
-// It will receive same props as the Page component (from getStaticProps, etc.)
-// Page.canvas = (props) => <Logo scale={0.5} route='/blob' position-y={0} />
 
 export async function getStaticProps() {
   return { props: { title: 'Index' } }
