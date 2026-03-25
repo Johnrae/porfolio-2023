@@ -40,18 +40,17 @@
     "vite-plus": "latest"
   },
   "scripts": {
-    "lint": "yarn prettier && yarn eslint",
-    "eslint": "next lint --fix --dir src",
-    "prettier": "vp fmt --check \"./src/**/*.{ts,tsx,md}\"",
     "dev": "next dev --webpack",
     "build": "next build --webpack",
     "analyze": "ANALYZE=true next build --webpack",
     "start": "next start",
     "prepare": "vp config"
   },
-  "packageManager": "yarn@4.13.0",
-  "resolutions": {
-    "vite": "npm:@voidzero-dev/vite-plus-core@latest",
-    "vitest": "npm:@voidzero-dev/vite-plus-test@latest"
+  "packageManager": "pnpm@10.7.0",
+  "pnpm": {
+    "overrides": {
+      "vite": "npm:@voidzero-dev/vite-plus-core@latest",
+      "vitest": "npm:@voidzero-dev/vite-plus-test@latest"
+    }
   }
 }
