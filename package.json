@@ -28,25 +28,30 @@
     "@types/react-dom": "^19.0.0",
     "@types/three": "^0.183.0",
     "@types/underscore": "^1.13.0",
-    "eslint": "^9.0.0",
     "eslint-config-next": "^16.1.6",
     "eslint-config-prettier": "^9.0.0",
     "file-loader": "^6.2.0",
     "glslify": "^7.1.1",
     "glslify-loader": "^2.0.0",
     "postcss": "^8.5.0",
-    "prettier": "^3.0.0",
     "raw-loader": "^4.0.2",
     "typescript": "^5.9.3",
-    "url-loader": "^4.1.1"
+    "url-loader": "^4.1.1",
+    "vite-plus": "latest"
   },
   "scripts": {
     "lint": "yarn prettier && yarn eslint",
     "eslint": "next lint --fix --dir src",
-    "prettier": "prettier --list-different \"./src/**/*.{ts,tsx,md}\"",
+    "prettier": "vp fmt --check \"./src/**/*.{ts,tsx,md}\"",
     "dev": "next dev --webpack",
     "build": "next build --webpack",
     "analyze": "ANALYZE=true next build --webpack",
-    "start": "next start"
+    "start": "next start",
+    "prepare": "vp config"
+  },
+  "packageManager": "yarn@4.13.0",
+  "resolutions": {
+    "vite": "npm:@voidzero-dev/vite-plus-core@latest",
+    "vitest": "npm:@voidzero-dev/vite-plus-test@latest"
   }
 }
