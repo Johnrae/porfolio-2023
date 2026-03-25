@@ -1,22 +1,27 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { MeshDistortMaterial } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import { useSpring, animated } from '@react-spring/three'
 import { Mesh } from 'three'
 
+// Extract the ref element type that MeshDistortMaterial forwards to
+type DistortMaterial = NonNullable<React.ComponentRef<typeof MeshDistortMaterial>>
+
+const BASE_SCALE = 1.5
+const EXPANDED_SCALE = 2.2
+const Z_POSITION = 0
+const MIN_DISTORTION = 0.1
+const MAX_DISTORTION = 0.6
+const PRESSED_DISTORTION_MULTIPLIER = 3.0
+
 export default function Blob() {
-  const ref = useRef<Mesh>(null)
-  const distortionRef = useRef(0.5)
+  const meshRef = useRef<Mesh>(null)
+  const materialRef = useRef<DistortMaterial>(null)
+  const distortionRef = useRef(MIN_DISTORTION)
+  const isMouseDownRef = useRef(false)
   const [active, setActive] = useState(false)
 
-  // Constants for better control
-  const BASE_SCALE = 100
-  const EXPANDED_SCALE = 150
-  const Z_POSITION = -500
-  const MIN_DISTORTION = 0.2
-  const MAX_DISTORTION = 1.0
-
-  const springConfig = { mass: 1, tension: 170, friction: 26 }
+  const springConfig = { mass: 1, tension: 200, friction: 16 }
 
   const { scale } = useSpring({
     scale: active
@@ -25,30 +30,56 @@ export default function Blob() {
     config: springConfig,
   })
 
+  useEffect(() => {
+    const onDown = () => {
+      isMouseDownRef.current = true
+    }
+    const onUp = () => {
+      isMouseDownRef.current = false
+    }
+    window.addEventListener('mousedown', onDown)
+    window.addEventListener('mouseup', onUp)
+    return () => {
+      window.removeEventListener('mousedown', onDown)
+      window.removeEventListener('mouseup', onUp)
+    }
+  }, [])
+
   useFrame(({ pointer, viewport, clock }) => {
-    if (!ref.current) return
+    if (!meshRef.current || !materialRef.current) return
 
-    ref.current.position.x = pointer.x * (viewport.width / 2)
-    ref.current.position.y = pointer.y * (viewport.height / 2)
-    ref.current.position.z = Z_POSITION
+    meshRef.current.position.x = pointer.x * (viewport.width / 3)
+    meshRef.current.position.y = pointer.y * (viewport.height / 3)
+    meshRef.current.position.z = Z_POSITION
 
-    ref.current.rotation.y = Math.sin(clock.getElapsedTime())
-    ref.current.rotation.x = Math.sin(clock.getElapsedTime() * 0.1)
+    meshRef.current.rotation.y = Math.sin(clock.getElapsedTime())
+    meshRef.current.rotation.x = Math.sin(clock.getElapsedTime() * 0.1)
 
-    // Update distortion via ref — no re-render triggered
     const distanceFromCenter = Math.sqrt(pointer.x * pointer.x + pointer.y * pointer.y)
     const normalizedDistance = Math.min(distanceFromCenter / Math.sqrt(2), 1)
-    distortionRef.current = MIN_DISTORTION + normalizedDistance * (MAX_DISTORTION - MIN_DISTORTION)
+    const baseDistortion = MIN_DISTORTION + normalizedDistance * (MAX_DISTORTION - MIN_DISTORTION)
+
+    distortionRef.current = isMouseDownRef.current
+      ? Math.min(baseDistortion * PRESSED_DISTORTION_MULTIPLIER, 3.0)
+      : baseDistortion
+
+    materialRef.current.distort = distortionRef.current
   })
 
   return (
     <animated.mesh
       onPointerDown={() => setActive(true)}
       onPointerUp={() => setActive(false)}
-      ref={ref}
+      ref={meshRef}
       scale={scale as unknown as [number, number, number]}>
-      <sphereGeometry args={[1, 64, 64]} />
-      <MeshDistortMaterial roughness={0.01} distort={distortionRef.current} color={'hotpink'} />
+      <sphereGeometry args={[1, 128, 128]} />
+      <MeshDistortMaterial
+        ref={materialRef}
+        roughness={0.2}
+        metalness={0.1}
+        distort={MIN_DISTORTION}
+        color={'hotpink'}
+      />
     </animated.mesh>
   )
 }
