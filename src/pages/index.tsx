@@ -1,15 +1,29 @@
 import dynamic from 'next/dynamic'
+import { useEffect, useRef, useState } from 'react'
+import { useAudio } from '@/hooks/useAudio'
+import KeyboardInstructions from '@/components/dom/KeyboardInstructions'
+import QuadrantOverlay from '@/components/dom/QuadrantOverlay'
 import Scene from '@/components/canvas/Scene'
 
 const Blob = dynamic(() => import('@/components/canvas/Blob'), { ssr: false })
-
-// Dynamic import is used to prevent a payload when the website starts, that includes threejs, r3f etc..
-// WARNING ! errors might get obfuscated by using dynamic import.
-// If something goes wrong go back to a static import to show the error.
-// https://github.com/pmndrs/react-three-next/issues/49
-const Synth = dynamic(() => import('@/components/dom/Synth'), { ssr: false })
+const Backdrop = dynamic(() => import('@/components/canvas/Backdrop'), { ssr: false })
 
 export default function Page() {
+  const { setup } = useAudio()
+  const [isComplete, setIsComplete] = useState(false)
+  const cleanupRef = useRef<(() => void) | null>(null)
+
+  useEffect(() => {
+    return () => {
+      cleanupRef.current?.()
+    }
+  }, [])
+
+  function handleEnter() {
+    cleanupRef.current = setup()
+    setIsComplete(true)
+  }
+
   return (
     <>
       <div className='fixed top-0 left-0 z-0 w-screen h-screen'>
@@ -18,11 +32,27 @@ export default function Page() {
         </div>
       </div>
       <div className='w-screen h-screen fixed z-10 top-0 left-0'>
-        <Synth />
         <Scene>
+          <Backdrop />
           <Blob />
         </Scene>
       </div>
+      {!isComplete ? (
+        <div className='fixed inset-0 z-20 flex items-center justify-center'>
+          <button
+            onClick={handleEnter}
+            className='cursor-pointer text-sm font-mono text-zinc-300 border border-zinc-600 rounded-lg px-4 py-2 hover:bg-zinc-800 transition-colors'>
+            Enter
+          </button>
+        </div>
+      ) : (
+        <>
+          <QuadrantOverlay />
+          <div className='fixed bottom-6 left-1/2 -translate-x-1/2 z-20'>
+            <KeyboardInstructions />
+          </div>
+        </>
+      )}
     </>
   )
 }

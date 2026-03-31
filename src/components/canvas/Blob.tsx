@@ -7,12 +7,12 @@ import { Mesh } from 'three'
 // Extract the ref element type that MeshDistortMaterial forwards to
 type DistortMaterial = NonNullable<React.ComponentRef<typeof MeshDistortMaterial>>
 
-const BASE_SCALE = 1.5
-const EXPANDED_SCALE = 2.2
+const BASE_SCALE = 1
+const EXPANDED_SCALE = 1.5
 const Z_POSITION = 0
 const MIN_DISTORTION = 0.1
 const MAX_DISTORTION = 0.6
-const PRESSED_DISTORTION_MULTIPLIER = 3.0
+const PRESSED_DISTORTION_MULTIPLIER = 2.5
 
 export default function Blob() {
   const meshRef = useRef<Mesh>(null)
@@ -56,7 +56,7 @@ export default function Blob() {
     meshRef.current.rotation.x = Math.sin(clock.getElapsedTime() * 0.1)
 
     const distanceFromCenter = Math.sqrt(pointer.x * pointer.x + pointer.y * pointer.y)
-    const normalizedDistance = Math.min(distanceFromCenter / Math.sqrt(2), 1)
+    const normalizedDistance = Math.min(distanceFromCenter / 2, 1)
     const baseDistortion = MIN_DISTORTION + normalizedDistance * (MAX_DISTORTION - MIN_DISTORTION)
 
     distortionRef.current = isMouseDownRef.current
@@ -76,9 +76,9 @@ export default function Blob() {
       <MeshDistortMaterial
         ref={materialRef}
         roughness={0.2}
-        metalness={0.1}
+        metalness={0.0}
         distort={MIN_DISTORTION}
-        color={'hotpink'}
+        color={'#BEFF26'}
       />
     </animated.mesh>
   )

@@ -1,9 +1,21 @@
-// [oscillator] -> [echoNode] -> [gainNode] -> [context.destination]
-//         \________________________/
+// Signal chain:
+//
+//   oscillator
+//       │
+//       ▼
+//     source (GainNode — master vol, gated 0/0.5)
+//       │
+//       ├── dryGain ────────────────────────────────► output
+//       │
+//       ├── tlWetGain ──► chorus ──────────────────► output   top-left
+//       ├── trWetGain ──► delay ───────────────────► output   top-right
+//       ├── blWetGain ──► bitcrusher ──────────────► output   bottom-left
+//       └── brWetGain ──► tremolo ─────────────────► output   bottom-right
+//
+// Mouse acts as a 4-channel spatial mixer. Each wet gain ramps from 0 (cursor
+// at center) to 1 (cursor at that corner). The dry gain is the complement so
+// the center feels clean and neutral.
 
-// Signal processing is wild
-
-import { throttle } from 'underscore'
 import Tuna from 'tunajs'
 
 // bottom row of keys
@@ -13,151 +25,176 @@ const noteToFrequency = (note: number) => {
   return 440 * Math.pow(2, (note - 69) / 12)
 }
 
+// Smooth gain transitions to avoid zipper noise
+const setGain = (node: GainNode, value: number, context: AudioContext) => {
+  node.gain.setTargetAtTime(value, context.currentTime, 0.05)
+}
+
 const setupAudio = (): (() => void) => {
   if (typeof window === 'undefined') return () => {}
 
   const context = new AudioContext()
   const tuna = new Tuna(context)
 
-  // Closure-scoped current note — no window pollution
   let currentNote = 48
 
+  // ── Source ──────────────────────────────────────────────────────────────────
   const oscillator = context.createOscillator()
+  oscillator.type = 'sine'
   oscillator.frequency.value = noteToFrequency(currentNote)
-  const input = context.createGain()
 
-  const chorus = new tuna.Chorus({
-    rate: 1.5,
-    feedback: 0.2,
-    delay: 0.0045,
-    bypass: 0,
-  })
+  const source = context.createGain()
+  source.gain.value = 0 // gated; toggled by play/stop
 
-  const delay = new tuna.Delay({
-    feedback: 0.7,
-    delayTime: 150,
-    wetLevel: 1,
-    dryLevel: 1,
-    cutoff: 16000,
-    bypass: false,
-  })
-
-  const bitcrusher = new tuna.Bitcrusher({
-    bits: 4,
-    normfreq: 0.1,
-    bufferSize: 4096,
-  })
-
-  const phaser = new tuna.Phaser({
-    rate: 1.2,
-    depth: 0.3,
-    feedback: 0.2,
-    stereoPhase: 30,
-    bypass: 0,
-  })
-
-  const tremolo = new tuna.Tremolo({
-    intensity: 0.3,
-    rate: 4,
-    stereoPhase: 0,
-    bypass: false,
-  })
-
-  const moogFilter = new tuna.MoogFilter({
-    cutoff: 0.065,
-    resonance: 3.5,
-    bufferSize: 8192,
-  })
-
-  const output = context.createGain()
-  input.gain.value = 0 // Master Volume
-
-  oscillator.type = 'sawtooth'
-  oscillator.connect(input)
+  oscillator.connect(source)
   oscillator.start()
 
-  input.connect(chorus)
-  chorus.connect(output)
-
-  input.connect(bitcrusher)
-  bitcrusher.connect(output)
-
-  input.connect(delay)
-  delay.connect(output)
-
-  input.connect(phaser)
-  phaser.connect(output)
-
-  input.connect(tremolo)
-  tremolo.connect(output)
-
-  input.connect(moogFilter)
-  moogFilter.connect(output)
-
+  // ── Output ──────────────────────────────────────────────────────────────────
+  const output = context.createGain()
+  output.gain.value = 1
   output.connect(context.destination)
 
+  // ── Dry path (center = fully dry) ───────────────────────────────────────────
+  const dryGain = context.createGain()
+  dryGain.gain.value = 1
+  source.connect(dryGain)
+  dryGain.connect(output)
+
+  // ── Top-left: Chorus ────────────────────────────────────────────────────────
+  // Lush, warm doubling effect. Parameters set for a thick, noticeable chorus.
+  const chorus = new tuna.Chorus({
+    rate: 0.8, // LFO rate in Hz — slow and wide for a dreamy feel
+    feedback: 0.4, // feedback ratio — adds depth
+    delay: 0.008, // base delay in seconds — longer = more spread
+    bypass: 0,
+  })
+
+  const tlWetGain = context.createGain()
+  tlWetGain.gain.value = 0
+  source.connect(tlWetGain)
+  tlWetGain.connect(chorus)
+  chorus.connect(output)
+
+  // ── Top-right: Delay ────────────────────────────────────────────────────────
+  // Slapback / echo. Keep feedback below 1 to avoid runaway buildup.
+  const delay = new tuna.Delay({
+    feedback: 0.45, // echo decay — stays controlled
+    delayTime: 220, // ms — dotted-8th-ish at moderate tempo
+    wetLevel: 1.0, // internal wet; we control level via trWetGain
+    dryLevel: 0.0, // no internal dry — our dryGain handles that
+    cutoff: 4000, // darken the echoes
+    bypass: false,
+  })
+
+  const trWetGain = context.createGain()
+  trWetGain.gain.value = 0
+  source.connect(trWetGain)
+  trWetGain.connect(delay)
+  delay.connect(output)
+
+  // ── Bottom-left: Bitcrusher ─────────────────────────────────────────────────
+  // Lo-fi crunch. Fixed at a clearly audible setting.
+  const bitcrusher = new tuna.Bitcrusher({
+    bits: 5, // bit depth — 5 gives clear grit without being too harsh
+    normfreq: 0.12, // sample-rate reduction — adds graininess
+    bufferSize: 256,
+  })
+
+  const blWetGain = context.createGain()
+  blWetGain.gain.value = 0
+  source.connect(blWetGain)
+  blWetGain.connect(bitcrusher)
+  bitcrusher.connect(output)
+
+  // ── Bottom-right: Tremolo ───────────────────────────────────────────────────
+  // Rhythmic amplitude modulation.
+  const tremolo = new tuna.Tremolo({
+    intensity: 0.9, // depth of the volume oscillation
+    rate: 4, // Hz — noticeable pulse
+    stereoPhase: 180, // full stereo alternation for width
+    bypass: false,
+  })
+
+  const brWetGain = context.createGain()
+  brWetGain.gain.value = 0
+  source.connect(brWetGain)
+  brWetGain.connect(tremolo)
+  tremolo.connect(output)
+
+  // ── Playback control ────────────────────────────────────────────────────────
   const play = () => {
-    input.gain.value = 0.5
+    source.gain.setTargetAtTime(0.5, context.currentTime, 0.01)
   }
 
   const stop = () => {
-    input.gain.value = 0
+    source.gain.setTargetAtTime(0, context.currentTime, 0.02)
   }
 
-  const handleMouseDown = () => {
-    play()
+  const handleMouseDown = () => play()
+  const handleMouseUp = () => stop()
+
+  // ── Spatial mixer ───────────────────────────────────────────────────────────
+  // The mousemove listener does the absolute minimum: store raw coordinates.
+  // A rAF loop reads them once per frame and applies the gain changes, keeping
+  // all audio-graph writes perfectly frame-aligned and off the event thread.
+  let mouseX = 0.5
+  let mouseY = 0.5
+  let rafId = 0
+
+  const handleMouseMove = (e: MouseEvent) => {
+    mouseX = e.clientX / window.innerWidth
+    mouseY = e.clientY / window.innerHeight
   }
 
-  const handleMouseUp = () => {
-    stop()
+  const rafLoop = () => {
+    const x = mouseX
+    const y = mouseY
+
+    // Per-axis distance from center, [0, 1]
+    const rx = Math.abs(x - 0.5) * 2
+    const ry = Math.abs(y - 0.5) * 2
+
+    // Corner weights: product of how far we are toward each axis direction
+    const tlW = Math.max(0, 0.5 - x) * 2 * Math.max(0, 0.5 - y) * 2 // left × top
+    const trW = Math.max(0, x - 0.5) * 2 * Math.max(0, 0.5 - y) * 2 // right × top
+    const blW = Math.max(0, 0.5 - x) * 2 * Math.max(0, y - 0.5) * 2 // left × bottom
+    const brW = Math.max(0, x - 0.5) * 2 * Math.max(0, y - 0.5) * 2 // right × bottom
+
+    // Dry is loudest at center; fades as cursor moves to any corner
+    const wetness = Math.min(1, Math.sqrt(rx * rx + ry * ry))
+    const dryLevel = 1 - wetness * 0.8 // never fully silent on dry
+
+    setGain(dryGain, dryLevel, context)
+    setGain(tlWetGain, tlW, context)
+    setGain(trWetGain, trW, context)
+    setGain(blWetGain, blW, context)
+    setGain(brWetGain, brW, context)
+
+    rafId = requestAnimationFrame(rafLoop)
   }
 
-  const handleMouseMove = throttle((e: MouseEvent) => {
-    const { clientX, clientY } = e
-    const { innerWidth, innerHeight } = window
-    const x = clientX / innerWidth
-    const y = clientY / innerHeight
+  rafId = requestAnimationFrame(rafLoop)
 
-    const quadrantNormalized = {
-      x: x > 0.5 ? (x - 0.5) * 2 : Math.abs((x - 0.5) * 2),
-      y: y > 0.5 ? (y - 0.5) * 2 : Math.abs((y - 0.5) * 2),
-    }
-
-    if (x > 0.5 && y < 0.5) {
-      delay.feedback = quadrantNormalized.x
-      delay.delayTime = quadrantNormalized.y * 1000
-    } else if (x < 0.5 && y < 0.5) {
-      moogFilter.cutoff = quadrantNormalized.x
-      moogFilter.resonance = quadrantNormalized.y * 4
-    } else if (x < 0.5 && y > 0.5) {
-      bitcrusher.bits = Math.floor(x * 15) + 1
-      bitcrusher.bufferSize = Math.pow(2, Math.floor((y - 0.5) * 13))
-    } else if (x > 0.5 && y > 0.5) {
-      phaser.mix = (x - 0.5) * 2
-      tremolo.rate = (y - 0.5) * 15 + 1
-      tremolo.intensity = (y - 0.5) * 2
-    }
-  }, 100)
-
+  // ── Keyboard ────────────────────────────────────────────────────────────────
   const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === 'f') {
+    if (e.key === 'q') {
       currentNote += 1
       oscillator.frequency.value = noteToFrequency(currentNote)
       return
     }
 
-    if (e.key === 'a') {
+    if (e.key === 'w') {
       currentNote -= 1
       oscillator.frequency.value = noteToFrequency(currentNote)
       return
     }
 
-    if (e.key === 's') {
+    if (e.key === 'e') {
       oscillator.frequency.value -= 2
       return
     }
 
-    if (e.key === 'd') {
+    if (e.key === 'r') {
       oscillator.frequency.value += 2
       return
     }
@@ -172,6 +209,15 @@ const setupAudio = (): (() => void) => {
       m: 59,
       ',': 60,
       '.': 62,
+      a: 47,
+      s: 49,
+      d: 51,
+      f: 53,
+      g: 55,
+      h: 57,
+      j: 59,
+      k: 61,
+      l: 63,
     }
 
     if (e.key in noteMap) {
@@ -194,8 +240,8 @@ const setupAudio = (): (() => void) => {
   window.addEventListener('keydown', handleKeyDown)
   window.addEventListener('keyup', handleKeyUp)
 
-  // Return cleanup function
   return () => {
+    cancelAnimationFrame(rafId)
     window.removeEventListener('mousedown', handleMouseDown)
     window.removeEventListener('mouseup', handleMouseUp)
     window.removeEventListener('mousemove', handleMouseMove)

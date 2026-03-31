@@ -7,12 +7,12 @@ interface LayoutProps {
   [key: string]: unknown
 }
 
-export default function Layout({ children, ref: forwardedRef, ...props }: LayoutProps) {
+export default function Layout({ children, ref: forwardedRef }: LayoutProps) {
   const localRef = useRef<HTMLDivElement>(null)
   return (
     <div
       ref={mergeRefs([forwardedRef ?? null, localRef])}
-      className='absolute top-0 left-0 z-10 w-screen h-screen overflow-hidden dom bg-zinc-900 text-gray-50'>
+      className='absolute top-0 left-0 z-10 w-screen h-screen overflow-hidden dom bg-gray-50 text-gray-50'>
       {children}
     </div>
   )
