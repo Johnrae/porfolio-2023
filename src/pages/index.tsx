@@ -26,11 +26,6 @@ export default function Page() {
 
   return (
     <>
-      <div className='fixed top-0 left-0 z-0 w-screen h-screen'>
-        <div className='flex flex-col items-center justify-center w-screen'>
-          <h1 className='text-lg select-none'>It's a website</h1>
-        </div>
-      </div>
       <div className='w-screen h-screen fixed z-10 top-0 left-0'>
         <Scene>
           <Backdrop />
@@ -48,7 +43,7 @@ export default function Page() {
       ) : (
         <>
           <QuadrantOverlay />
-          <div className='fixed bottom-6 left-1/2 -translate-x-1/2 z-20'>
+          <div className='fixed bottom-6 left-1/2 -translate-x-1/2 z-20 pointer-events-none'>
             <KeyboardInstructions />
           </div>
         </>

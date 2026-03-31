@@ -230,19 +230,37 @@ const setupAudio = (): (() => void) => {
     const x = mouseX
     const y = mouseY
 
-    // Per-axis distance from center, [0, 1]
+    // Per-axis distance from center, [0, 1].
+    // rx = 0 at x=0.5 (center), 1 at either horizontal edge
+    // ry = 0 at y=0.5 (center), 1 at either vertical edge
     const rx = Math.abs(x - 0.5) * 2
     const ry = Math.abs(y - 0.5) * 2
 
-    // Corner weights: product of how far we are toward each axis direction
-    const tlW = Math.max(0, 0.5 - x) * 2 * Math.max(0, 0.5 - y) * 2 // left × top
-    const trW = Math.max(0, x - 0.5) * 2 * Math.max(0, 0.5 - y) * 2 // right × top
-    const blW = Math.max(0, 0.5 - x) * 2 * Math.max(0, y - 0.5) * 2 // left × bottom
-    const brW = Math.max(0, x - 0.5) * 2 * Math.max(0, y - 0.5) * 2 // right × bottom
-
-    // Dry is loudest at center; fades as cursor moves to any corner
+    // Overall displacement from center drives wetness and dry attenuation.
     const wetness = Math.min(1, Math.sqrt(rx * rx + ry * ry))
     const dryLevel = 1 - wetness * 0.8 // never fully silent on dry
+
+    // Directional shares along each axis.
+    // xShare splits rx between left (L) and right (R): at the left edge xL=1,xR=0;
+    // at the right edge xL=0,xR=1; on the vertical center line xL=xR=0.5.
+    // yShare splits ry between top (T) and bottom (B) the same way.
+    // Multiplying a share by its axis distance gives the actual contribution.
+    const xShareL = x < 0.5 ? 1 : x > 0.5 ? 0 : 0.5
+    const xShareR = x > 0.5 ? 1 : x < 0.5 ? 0 : 0.5
+    const yShareT = y < 0.5 ? 1 : y > 0.5 ? 0 : 0.5
+    const yShareB = y > 0.5 ? 1 : y < 0.5 ? 0 : 0.5
+
+    // Each corner weight = wetness × horizontal share × vertical share.
+    // Examples (all at wetness = 1):
+    //   top-left corner   (0,0):   xShareL=1, yShareT=1 → tlW=1, rest=0
+    //   top-right corner  (1,0):   xShareR=1, yShareT=1 → trW=1, rest=0
+    //   top-center edge   (0.5,0): xShareL=xShareR=0.5, yShareT=1 → tlW=trW=0.5
+    //   right-center edge (1,0.5): xShareR=1, yShareT=yShareB=0.5 → trW=brW=0.5
+    //   center            (0.5,0.5): wetness=0 → all weights 0 (fully dry)
+    const tlW = wetness * xShareL * yShareT
+    const trW = wetness * xShareR * yShareT
+    const blW = wetness * xShareL * yShareB
+    const brW = wetness * xShareR * yShareB
 
     setGain(dryGain, dryLevel, context)
     setGain(tlWetGain, tlW, context)
