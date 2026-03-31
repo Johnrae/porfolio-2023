@@ -83,7 +83,7 @@ export default function QuadrantOverlay() {
           strokeDashoffset={vOffset}
         />
       </svg>
-      <QuadrantHint position='tl' label='chorus' sub='warm doubling' />
+      <QuadrantHint position='tl' label='reverb' sub='hall' />
       <QuadrantHint position='tr' label='delay' sub='echo' />
       <QuadrantHint position='bl' label='bitcrush' sub='lo-fi' />
       <QuadrantHint position='br' label='tremolo' sub='pulse' />

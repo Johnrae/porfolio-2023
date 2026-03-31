@@ -7,7 +7,7 @@
 //       │
 //       ├── dryGain ────────────────────────────────► output
 //       │
-//       ├── tlWetGain ──► chorus ──────────────────► output   top-left
+//       ├── tlWetGain ──► reverb ──────────────────► output   top-left
 //       ├── trWetGain ──► delay ───────────────────► output   top-right
 //       ├── blWetGain ──► bitcrusher ──────────────► output   bottom-left
 //       └── brWetGain ──► tremolo ─────────────────► output   bottom-right
@@ -18,12 +18,43 @@
 
 import Tuna from 'tunajs'
 
-// bottom row of keys
-const keyboard = ['z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.']
+const SEMITONE_UP = Math.pow(2, 1 / 12) // ×1.0595 per semitone up
+const SEMITONE_DOWN = Math.pow(2, -1 / 12) // ×0.9439 per semitone down
 
-const noteToFrequency = (note: number) => {
-  return 440 * Math.pow(2, (note - 69) / 12)
+// ── Key layout ───────────────────────────────────────────────────────────────
+// Edit this map to change which MIDI note each key plays.
+// MIDI 69 = A4 = 440 Hz. Each integer step is one semitone.
+const KEY_NOTES: Record<string, number> = {
+  // A row (upper) — B2 → Eb4
+  a: 47, // B2
+  s: 49, // C#3
+  d: 51, // Eb3
+  f: 53, // F3
+  g: 55, // G3
+  h: 57, // A3
+  j: 59, // B3
+  k: 61, // C#4
+  l: 63, // Eb4
+  // Z row (lower) — C3 → D4
+  z: 48, // C3
+  x: 50, // D3
+  c: 52, // E3
+  v: 53, // F3
+  b: 55, // G3
+  n: 57, // A3
+  m: 59, // B3
+  ',': 60, // C4
+  '.': 62, // D4
 }
+
+const midiToHz = (note: number) => 440 * Math.pow(2, (note - 69) / 12)
+
+// Derived at module load — no per-keystroke math
+const frequencyMap: Record<string, number> = Object.fromEntries(
+  Object.entries(KEY_NOTES).map(([key, midi]) => [key, midiToHz(midi)]),
+)
+
+const keyboard = Object.keys(KEY_NOTES)
 
 // Smooth gain transitions to avoid zipper noise
 const setGain = (node: GainNode, value: number, context: AudioContext) => {
@@ -36,12 +67,12 @@ const setupAudio = (): (() => void) => {
   const context = new AudioContext()
   const tuna = new Tuna(context)
 
-  let currentNote = 48
+  let currentFreq = frequencyMap['z'] // C3 default
 
   // ── Source ──────────────────────────────────────────────────────────────────
   const oscillator = context.createOscillator()
-  oscillator.type = 'sine'
-  oscillator.frequency.value = noteToFrequency(currentNote)
+  oscillator.type = 'sawtooth'
+  oscillator.frequency.value = currentFreq
 
   const source = context.createGain()
   source.gain.value = 0 // gated; toggled by play/stop
@@ -60,29 +91,76 @@ const setupAudio = (): (() => void) => {
   source.connect(dryGain)
   dryGain.connect(output)
 
-  // ── Top-left: Chorus ────────────────────────────────────────────────────────
-  // Lush, warm doubling effect. Parameters set for a thick, noticeable chorus.
-  const chorus = new tuna.Chorus({
-    rate: 0.8, // LFO rate in Hz — slow and wide for a dreamy feel
-    feedback: 0.4, // feedback ratio — adds depth
-    delay: 0.008, // base delay in seconds — longer = more spread
-    bypass: 0,
-  })
+  // ── Top-left: Modulated Reverb ──────────────────────────────────────────────
+  // Convolver reverb with an LFO-driven pre-delay for pitch shimmer.
+  // The LFO modulates a short DelayNode before the convolver — this causes the
+  // reverb tail to waver in pitch, giving a lush "modulated reverb" character.
+  //
+  // NOTE: tlWetGain gates only the *input* to the reverb. The convolver is
+  // connected directly to output (not through source) so the tail rings out
+  // naturally after mouse up — it is not cut by the source gate.
+  const buildImpulse = (ctx: AudioContext, duration: number, decay: number) => {
+    const sampleRate = ctx.sampleRate
+    const length = sampleRate * duration
+    const impulse = ctx.createBuffer(2, length, sampleRate)
+    for (let ch = 0; ch < 2; ch++) {
+      const data = impulse.getChannelData(ch)
+      for (let i = 0; i < length; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, decay)
+      }
+    }
+    return impulse
+  }
+
+  const MOD_DELAY_CENTER = 0.02 // 20ms center delay
+  const MOD_DEPTH = 0.008 // ±8ms pitch shimmer
+  const MOD_RATE = 0.3 // Hz — slow, dreamy sweep
+
+  const reverbPreDelay = context.createDelay(0.05)
+  reverbPreDelay.delayTime.value = MOD_DELAY_CENTER
+
+  const reverbLfo = context.createOscillator()
+  reverbLfo.type = 'sine'
+  reverbLfo.frequency.value = MOD_RATE
+
+  const reverbLfoDepth = context.createGain()
+  reverbLfoDepth.gain.value = MOD_DEPTH
+
+  reverbLfo.connect(reverbLfoDepth)
+  reverbLfoDepth.connect(reverbPreDelay.delayTime)
+  reverbLfo.start()
+
+  const reverb = context.createConvolver()
+  reverb.buffer = buildImpulse(context, 2.5, 2.5)
+  reverb.normalize = true
+
+  const reverbOutput = context.createGain()
+  reverbOutput.gain.value = 0.6 // tame the wet level slightly
+
+  reverbPreDelay.connect(reverb)
+  reverb.connect(reverbOutput)
+  reverbOutput.connect(output)
+
+  // The reverb send taps the oscillator via its own gate (reverbGate), opened
+  // and closed by play()/stop() in sync with source. The gate going to 0 stops
+  // new signal entering the convolver, but the tail rings out naturally.
+  const reverbGate = context.createGain()
+  reverbGate.gain.value = 0
+  oscillator.connect(reverbGate)
 
   const tlWetGain = context.createGain()
   tlWetGain.gain.value = 0
-  source.connect(tlWetGain)
-  tlWetGain.connect(chorus)
-  chorus.connect(output)
+  reverbGate.connect(tlWetGain)
+  tlWetGain.connect(reverbPreDelay)
 
   // ── Top-right: Delay ────────────────────────────────────────────────────────
   // Slapback / echo. Keep feedback below 1 to avoid runaway buildup.
   const delay = new tuna.Delay({
-    feedback: 0.45, // echo decay — stays controlled
-    delayTime: 220, // ms — dotted-8th-ish at moderate tempo
+    feedback: 0.55, // echo decay — stays controlled
+    delayTime: 300, // ms — dotted-8th-ish at moderate tempo
     wetLevel: 1.0, // internal wet; we control level via trWetGain
     dryLevel: 0.0, // no internal dry — our dryGain handles that
-    cutoff: 4000, // darken the echoes
+    cutoff: 16000, // darken the echoes
     bypass: false,
   })
 
@@ -95,8 +173,8 @@ const setupAudio = (): (() => void) => {
   // ── Bottom-left: Bitcrusher ─────────────────────────────────────────────────
   // Lo-fi crunch. Fixed at a clearly audible setting.
   const bitcrusher = new tuna.Bitcrusher({
-    bits: 5, // bit depth — 5 gives clear grit without being too harsh
-    normfreq: 0.12, // sample-rate reduction — adds graininess
+    bits: 4, // bit depth — 4 gives clear grit without being too harsh
+    normfreq: 0.05, // sample-rate reduction — adds graininess
     bufferSize: 256,
   })
 
@@ -109,8 +187,8 @@ const setupAudio = (): (() => void) => {
   // ── Bottom-right: Tremolo ───────────────────────────────────────────────────
   // Rhythmic amplitude modulation.
   const tremolo = new tuna.Tremolo({
-    intensity: 0.9, // depth of the volume oscillation
-    rate: 4, // Hz — noticeable pulse
+    intensity: 1, // depth of the volume oscillation
+    rate: 2, // Hz — noticeable pulse
     stereoPhase: 180, // full stereo alternation for width
     bypass: false,
   })
@@ -124,10 +202,12 @@ const setupAudio = (): (() => void) => {
   // ── Playback control ────────────────────────────────────────────────────────
   const play = () => {
     source.gain.setTargetAtTime(0.5, context.currentTime, 0.01)
+    reverbGate.gain.setTargetAtTime(1, context.currentTime, 0.01)
   }
 
   const stop = () => {
     source.gain.setTargetAtTime(0, context.currentTime, 0.02)
+    reverbGate.gain.setTargetAtTime(0, context.currentTime, 0.02)
   }
 
   const handleMouseDown = () => play()
@@ -178,14 +258,14 @@ const setupAudio = (): (() => void) => {
   // ── Keyboard ────────────────────────────────────────────────────────────────
   const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'q') {
-      currentNote += 1
-      oscillator.frequency.value = noteToFrequency(currentNote)
+      currentFreq *= SEMITONE_UP
+      oscillator.frequency.value = currentFreq
       return
     }
 
     if (e.key === 'w') {
-      currentNote -= 1
-      oscillator.frequency.value = noteToFrequency(currentNote)
+      currentFreq *= SEMITONE_DOWN
+      oscillator.frequency.value = currentFreq
       return
     }
 
@@ -199,30 +279,9 @@ const setupAudio = (): (() => void) => {
       return
     }
 
-    const noteMap: Record<string, number> = {
-      z: 48,
-      x: 50,
-      c: 52,
-      v: 53,
-      b: 55,
-      n: 57,
-      m: 59,
-      ',': 60,
-      '.': 62,
-      a: 47,
-      s: 49,
-      d: 51,
-      f: 53,
-      g: 55,
-      h: 57,
-      j: 59,
-      k: 61,
-      l: 63,
-    }
-
-    if (e.key in noteMap) {
-      currentNote = noteMap[e.key]
-      oscillator.frequency.value = noteToFrequency(currentNote)
+    if (e.key in frequencyMap) {
+      currentFreq = frequencyMap[e.key]
+      oscillator.frequency.value = currentFreq
     }
 
     play()
@@ -248,6 +307,7 @@ const setupAudio = (): (() => void) => {
     window.removeEventListener('keydown', handleKeyDown)
     window.removeEventListener('keyup', handleKeyUp)
     oscillator.stop()
+    reverbLfo.stop()
     context.close()
   }
 }
