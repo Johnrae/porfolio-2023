@@ -12,7 +12,7 @@ export default function Layout({ children, ref: forwardedRef }: LayoutProps) {
   return (
     <div
       ref={mergeRefs([forwardedRef ?? null, localRef])}
-      className='absolute top-0 left-0 z-10 w-screen h-screen overflow-hidden dom bg-gray-50 text-gray-50'>
+      className='absolute top-0 left-0 z-10 w-screen min-h-screen dom'>
       {children}
     </div>
   )
