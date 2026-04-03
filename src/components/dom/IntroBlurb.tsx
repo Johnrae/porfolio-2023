@@ -163,15 +163,7 @@ export default function IntroBlurb({ ballPosRef, containerRef }: IntroBlurbProps
           {line.text}
         </span>
       ))}
-      <span
-        className='absolute font-mono text-zinc-600 tracking-widest uppercase'
-        style={{
-          left: '50%',
-          bottom: '10%',
-          transform: 'translateX(-50%)',
-          fontSize: 11,
-          whiteSpace: 'nowrap',
-        }}>
+      <span className='absolute font-mono text-zinc-600 tracking-widest uppercase top-20 left-1/2 -translate-1/2'>
         {HINT}
       </span>
     </div>

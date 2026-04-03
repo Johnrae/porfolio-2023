@@ -15,6 +15,13 @@
     width: 100%;
     margin: 0;
     padding: 0;
+    /* Prevent text selection and scroll-drag conflicts on touch devices */
+    user-select: none;
+    -webkit-user-select: none;
+    /* Disable browser touch gestures (scroll, zoom) so drag tracks the ball */
+    touch-action: none;
+    /* Remove the grey tap-highlight flash on mobile WebKit */
+    -webkit-tap-highlight-color: transparent;
     cursor:
       url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="8" height="8"><circle cx="4" cy="4" r="4" fill="%23BEFF26"/></svg>')
         4 4,

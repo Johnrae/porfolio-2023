@@ -39,9 +39,15 @@ export default function Blob() {
     }
     window.addEventListener('mousedown', onDown)
     window.addEventListener('mouseup', onUp)
+    window.addEventListener('touchstart', onDown, { passive: true })
+    window.addEventListener('touchend', onUp)
+    window.addEventListener('touchcancel', onUp)
     return () => {
       window.removeEventListener('mousedown', onDown)
       window.removeEventListener('mouseup', onUp)
+      window.removeEventListener('touchstart', onDown)
+      window.removeEventListener('touchend', onUp)
+      window.removeEventListener('touchcancel', onUp)
     }
   }, [])
 

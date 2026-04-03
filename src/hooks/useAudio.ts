@@ -226,6 +226,23 @@ const setupAudio = (): (() => void) => {
     mouseY = e.clientY / window.innerHeight
   }
 
+  const handleTouchStart = (e: TouchEvent) => {
+    const touch = e.touches[0]
+    if (!touch) return
+    mouseX = touch.clientX / window.innerWidth
+    mouseY = touch.clientY / window.innerHeight
+    play()
+  }
+
+  const handleTouchMove = (e: TouchEvent) => {
+    const touch = e.touches[0]
+    if (!touch) return
+    mouseX = touch.clientX / window.innerWidth
+    mouseY = touch.clientY / window.innerHeight
+  }
+
+  const handleTouchEnd = () => stop()
+
   const rafLoop = () => {
     const x = mouseX
     const y = mouseY
@@ -314,6 +331,10 @@ const setupAudio = (): (() => void) => {
   window.addEventListener('mousedown', handleMouseDown)
   window.addEventListener('mouseup', handleMouseUp)
   window.addEventListener('mousemove', handleMouseMove)
+  window.addEventListener('touchstart', handleTouchStart, { passive: true })
+  window.addEventListener('touchmove', handleTouchMove, { passive: true })
+  window.addEventListener('touchend', handleTouchEnd)
+  window.addEventListener('touchcancel', handleTouchEnd)
   window.addEventListener('keydown', handleKeyDown)
   window.addEventListener('keyup', handleKeyUp)
 
@@ -322,6 +343,10 @@ const setupAudio = (): (() => void) => {
     window.removeEventListener('mousedown', handleMouseDown)
     window.removeEventListener('mouseup', handleMouseUp)
     window.removeEventListener('mousemove', handleMouseMove)
+    window.removeEventListener('touchstart', handleTouchStart)
+    window.removeEventListener('touchmove', handleTouchMove)
+    window.removeEventListener('touchend', handleTouchEnd)
+    window.removeEventListener('touchcancel', handleTouchEnd)
     window.removeEventListener('keydown', handleKeyDown)
     window.removeEventListener('keyup', handleKeyUp)
     oscillator.stop()

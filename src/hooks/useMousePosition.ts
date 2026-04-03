@@ -11,8 +11,8 @@ export function useMousePosition(): MousePosition {
   const latestRef = useRef<MousePosition>({ x: -999, y: -999 })
 
   useEffect(() => {
-    const handleMove = (e: MouseEvent) => {
-      latestRef.current = { x: e.clientX, y: e.clientY }
+    const scheduleUpdate = (x: number, y: number) => {
+      latestRef.current = { x, y }
       if (rafRef.current !== null) return
       rafRef.current = requestAnimationFrame(() => {
         setPosition({ ...latestRef.current })
@@ -20,9 +20,22 @@ export function useMousePosition(): MousePosition {
       })
     }
 
+    const handleMove = (e: MouseEvent) => scheduleUpdate(e.clientX, e.clientY)
+
+    const handleTouch = (e: TouchEvent) => {
+      const touch = e.touches[0]
+      if (!touch) return
+      scheduleUpdate(touch.clientX, touch.clientY)
+    }
+
     window.addEventListener('mousemove', handleMove)
+    window.addEventListener('touchstart', handleTouch, { passive: true })
+    window.addEventListener('touchmove', handleTouch, { passive: true })
+
     return () => {
       window.removeEventListener('mousemove', handleMove)
+      window.removeEventListener('touchstart', handleTouch)
+      window.removeEventListener('touchmove', handleTouch)
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
     }
   }, [])
