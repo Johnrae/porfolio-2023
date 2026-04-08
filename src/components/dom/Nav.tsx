@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 
@@ -8,18 +9,32 @@ const NAV_LINKS = [
 ]
 
 export default function Nav() {
-  const { pathname } = useRouter()
+  const router = useRouter()
+  const { pathname } = router
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (!e.ctrlKey) return
+      const index = parseInt(e.key, 10)
+      if (index >= 0 && index < NAV_LINKS.length) {
+        e.preventDefault()
+        router.push(NAV_LINKS[index].href)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [router])
 
   return (
-    <nav className='fixed top-0 left-0 right-0 z-30 flex items-center justify-center px-8 py-5'>
-      <ul className='flex items-center gap-8 px-6 py-3 border border-black bg-white'>
+    <nav className='fixed bottom-10 left-0 right-0 z-30 bg-[#3dff23] flex items-center justify-center px-12 py-2 font-mono text-xs text-black tracking-wider'>
+      <ul className='flex items-center gap-8'>
         {NAV_LINKS.map(({ href, label }, i) => (
           <li key={href}>
             <Link
               href={href}
               className={[
-                'font-mono text-xs tracking-widest transition-colors',
-                pathname === href ? 'text-black' : 'text-zinc-400 hover:text-black',
+                'transition-opacity',
+                pathname === href ? 'opacity-100' : 'opacity-50 hover:opacity-100',
               ].join(' ')}>
               [{i}] {label}
             </Link>

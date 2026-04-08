@@ -25,15 +25,6 @@ export default function Page() {
       </div>
       <GhostBall x={x} y={y} ballPosRef={ballPosRef} />
       <IntroBlurb ballPosRef={ballPosRef} containerRef={containerRef} />
-      <footer
-        className='fixed bottom-0 left-0 right-0 z-30 flex items-center justify-between px-12 py-2 text-black text-xs font-mono tracking-wider'
-        style={{ background: '#3dff23' }}
-        onClick={(e) => e.stopPropagation()}>
-        <span>[0] I write react code</span>
-        <span>[1] github.com/johnrae</span>
-        <span>[2] 678-315-5015</span>
-        <span>[3] john.rae23@gmail.com</span>
-      </footer>
     </div>
   )
 }

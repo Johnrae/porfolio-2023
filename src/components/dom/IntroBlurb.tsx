@@ -13,7 +13,7 @@ const HINT = 'click anywhere to start the synth'
 
 const FONT_SIZE = 18
 const LINE_HEIGHT = 30
-const FONT = `${FONT_SIZE}px ui-monospace, SFMono-Regular, Menlo, monospace`
+const FONT = `${FONT_SIZE}px 'Space Mono', ui-monospace, SFMono-Regular, Menlo, monospace`
 const BALL_PADDING = 12
 const MIN_SLOT_WIDTH = 40
 

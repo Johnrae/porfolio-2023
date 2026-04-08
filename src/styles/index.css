@@ -1,8 +1,16 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
 @layer theme, base, components, utilities;
 
 @import 'tailwindcss/theme' layer(theme);
 @import 'tailwindcss/preflight' layer(base);
 @import 'tailwindcss/utilities' layer(utilities);
+
+@layer theme {
+  :root {
+    --font-mono: 'Space Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+}
 
 @layer base {
   * {
@@ -23,7 +31,7 @@
     /* Remove the grey tap-highlight flash on mobile WebKit */
     -webkit-tap-highlight-color: transparent;
     cursor:
-      url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="8" height="8"><circle cx="4" cy="4" r="4" fill="%23BEFF26"/></svg>')
+      url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="8" height="8"><circle cx="4" cy="4" r="4" fill="%233dff23"/></svg>')
         4 4,
       none;
   }

@@ -164,31 +164,63 @@ const WORKSHOP_ITEMS: WorkshopItem[] = [
   },
   {
     name: 'Large Diaphragm Condenser Microphone',
-    description: 'Built a LDC mic from a capsule kit, custom PCB, and tube power supply. It records.',
+    description: 'Built a LDC mic from a capsule kit, custom PCB, and tube power supply.',
   },
   {
     name: 'Tube Amplifier Builds',
     description: 'Point-to-point wired guitar amplifiers. Transformers, output stages, bias, the whole thing.',
   },
   {
+    name: 'Guitar Pedals',
+    description:
+      'Clones of vintage pedals and expensive oddities, mostly done to avoid paying top dollar for simple gear.',
+  },
+  {
     name: 'Music Production',
     description:
-      "Writing, recording, and mixing original music. The hardware exists because the software wasn't enough.",
+      'Writing, recording, and mixing original music. All the hardware projects were done to support the passion.',
   },
 ]
 
+function SectionHeader({
+  label,
+  value,
+  rightLabel,
+  rightValue,
+}: {
+  label: string
+  value: string
+  rightLabel?: string
+  rightValue?: string
+}) {
+  return (
+    <div className='bg-[#f3f3f4] flex items-baseline gap-6 px-6 py-3 w-full'>
+      <div className='flex items-baseline gap-4 flex-1'>
+        <span className='text-sm tracking-[0.18em] uppercase shrink-0'>{label}</span>
+        <span className='text-xl'>{value}</span>
+      </div>
+      {rightLabel && rightValue && (
+        <div className='flex items-baseline gap-3'>
+          <span className='text-sm tracking-[0.18em] uppercase shrink-0'>{rightLabel}</span>
+          <span className='text-xl text-right'>{rightValue}</span>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function ResumePage() {
   return (
-    <div className='min-h-screen bg-zinc-950 text-zinc-300 overflow-y-auto'>
+    <div className='min-h-screen bg-white text-black font-mono overflow-y-auto'>
       <Nav />
-      <main className='max-w-2xl mx-auto px-8 pt-32 pb-24'>
+      <main className='max-w-4xl mx-auto px-8 pt-32 pb-24'>
         {/* Summary */}
-        <section className='mb-20'>
-          <h1 className='font-mono text-3xl text-zinc-100 mb-4'>John Rae</h1>
-          <p className='font-mono text-sm text-zinc-500 tracking-widest uppercase mb-8'>
-            Lead / Staff Engineer · Full Stack · Frontend · Atlanta, GA
-          </p>
-          <p className='text-zinc-400 leading-relaxed'>
+        <section className='mb-16'>
+          <div className='flex flex-col items-center gap-2 mb-8 text-center'>
+            <h1 className='text-2xl'>John Rae</h1>
+            <p className='text-sm'>Lead / Staff Engineer · Full Stack · Frontend · Atlanta, GA</p>
+          </div>
+          <p className='text-sm text-zinc-600 leading-relaxed'>
             Senior engineer with 10+ years building complex, production-grade web applications. Proven track record
             leading teams, architecting systems end-to-end, and shipping AI-powered features. Deep expertise in React,
             TypeScript, and Next.js with backend experience in Rails, Django, and Node. Comfortable spanning product,
@@ -197,37 +229,37 @@ export default function ResumePage() {
         </section>
 
         {/* Principles */}
-        <section className='mb-20'>
-          <h2 className='font-mono text-xs text-zinc-600 tracking-widest uppercase mb-8'>Principles</h2>
-          <div className='space-y-6'>
+        <section className='mb-16'>
+          <SectionHeader label='SECTION:' value='Principles' />
+          <div className='pl-10 mt-4 space-y-6'>
             {PRINCIPLES.map((principle) => (
-              <div key={principle.title} className='border-l border-zinc-800 pl-6'>
-                <h3 className='font-mono text-sm text-zinc-200 mb-2'>{principle.title}</h3>
-                <p className='text-zinc-500 text-sm leading-relaxed'>{principle.description}</p>
+              <div key={principle.title} className=''>
+                <h3 className='text-sm font-bold mb-1'>{principle.title}</h3>
+                <p className='text-sm text-zinc-600 leading-relaxed'>{principle.description}</p>
               </div>
             ))}
           </div>
         </section>
 
         {/* How I work */}
-        <section className='mb-20'>
-          <h2 className='font-mono text-xs text-zinc-600 tracking-widest uppercase mb-8'>How I work</h2>
-          <div className='space-y-6'>
+        <section className='mb-16'>
+          <SectionHeader label='SECTION:' value='How I Work' />
+          <div className='pl-10 mt-4 space-y-6'>
             {HOW_I_WORK.map((item) => (
               <div key={item.title}>
-                <h3 className='font-mono text-sm text-zinc-200 mb-2'>{item.title}</h3>
-                <p className='text-zinc-500 text-sm leading-relaxed'>{item.description}</p>
+                <h3 className='text-sm font-bold mb-1'>{item.title}</h3>
+                <p className='text-sm text-zinc-600 leading-relaxed'>{item.description}</p>
               </div>
             ))}
           </div>
         </section>
 
         {/* Skills */}
-        <section className='mb-20'>
-          <h2 className='font-mono text-xs text-zinc-600 tracking-widest uppercase mb-8'>Skills</h2>
-          <div className='flex flex-wrap gap-2'>
+        <section className='mb-16'>
+          <SectionHeader label='SECTION:' value='Skills' />
+          <div className='pl-10 mt-4 flex flex-wrap gap-2'>
             {SKILLS.map((skill) => (
-              <span key={skill} className='font-mono text-xs text-zinc-400 border border-zinc-800 rounded px-3 py-1.5'>
+              <span key={skill} className='text-xs border border-zinc-300 px-3 py-1.5'>
                 {skill}
               </span>
             ))}
@@ -235,45 +267,38 @@ export default function ResumePage() {
         </section>
 
         {/* Experience */}
-        <section className='mb-20'>
-          <h2 className='font-mono text-xs text-zinc-600 tracking-widest uppercase mb-8'>Experience</h2>
-          <div className='space-y-12'>
+        <section className='mb-16'>
+          <div className='flex flex-col gap-12'>
             {EXPERIENCE.map((entry) => (
-              <div key={entry.company}>
-                <div className='mb-4'>
-                  <span className='font-mono text-xs text-zinc-600'>{entry.period}</span>
-                  <h3 className='font-mono text-sm text-zinc-100 mt-1'>{entry.role}</h3>
-                  <p className='font-mono text-xs text-zinc-500 tracking-wide'>{entry.company}</p>
-                  <p className='font-mono text-xs text-zinc-600 italic'>{entry.subtitle}</p>
+              <div key={entry.company} className='flex flex-col gap-4'>
+                <SectionHeader label='COMPANY:' value={entry.company} rightLabel='ROLE:' rightValue={entry.role} />
+                <div className='pl-10 flex flex-col gap-3 text-sm'>
+                  <p className='leading-tight'>{entry.period}</p>
+                  <p className='text-xs text-zinc-500 italic'>{entry.subtitle}</p>
+                  <p className='text-zinc-600 leading-relaxed'>{entry.narrative}</p>
+                  {entry.stack.length > 0 && (
+                    <div className='flex flex-wrap gap-1.5'>
+                      {entry.stack.map((tech) => (
+                        <span key={tech} className='text-[10px] border border-zinc-300 px-2 py-0.5'>
+                          {tech}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                <p className='text-zinc-500 text-sm leading-relaxed mb-4'>{entry.narrative}</p>
-                {entry.stack.length > 0 && (
-                  <div className='flex flex-wrap gap-1.5'>
-                    {entry.stack.map((tech) => (
-                      <span
-                        key={tech}
-                        className='font-mono text-[10px] text-zinc-600 border border-zinc-800/60 rounded px-2 py-0.5'>
-                        {tech}
-                      </span>
-                    ))}
-                  </div>
-                )}
               </div>
             ))}
           </div>
         </section>
 
         {/* The Workshop */}
-        <section className='mb-20'>
-          <h2 className='font-mono text-xs text-zinc-600 tracking-widest uppercase mb-2'>The Workshop</h2>
-          <p className='text-zinc-600 text-sm mb-8 leading-relaxed'>
-            Software wasn't deep enough. So I started building hardware.
-          </p>
-          <div className='space-y-8'>
+        <section className='mb-16'>
+          <SectionHeader label='SECTION:' value='Electronics Projects' />
+          <div className='pl-10 space-y-6 pt-10'>
             {WORKSHOP_ITEMS.map((item) => (
-              <div key={item.name} className='border-l border-zinc-800 pl-6'>
-                <h3 className='font-mono text-sm text-zinc-200 mb-2'>{item.name}</h3>
-                <p className='text-zinc-500 text-sm leading-relaxed'>{item.description}</p>
+              <div key={item.name} className='border-l-2 border-zinc-300 pl-6'>
+                <h3 className='text-sm font-bold mb-1'>{item.name}</h3>
+                <p className='text-sm text-zinc-600 leading-relaxed'>{item.description}</p>
               </div>
             ))}
           </div>

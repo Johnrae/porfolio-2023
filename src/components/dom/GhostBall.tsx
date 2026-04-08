@@ -167,10 +167,11 @@ export default function GhostBall({ x, y, ballPosRef }: GhostBallProps) {
             const borderW = Math.max(2, r * 0.04)
             ctx.beginPath()
             ctx.arc(point.x, point.y, tr, 0, Math.PI * 2)
-            ctx.fillStyle = `rgba(0,0,0,${opacity})`
+            ctx.fillStyle = `rgba(256,256,256,${opacity})`
             ctx.fill()
             ctx.lineWidth = borderW
-            ctx.strokeStyle = `rgba(61,255,35,${opacity})`
+            // TODO: use tailwind color zinc-400
+            ctx.strokeStyle = `rgba(159,159,169,${opacity})`
             ctx.stroke()
           })
 
@@ -199,24 +200,24 @@ export default function GhostBall({ x, y, ballPosRef }: GhostBallProps) {
       {/* Main ball */}
       <div
         ref={mainBallElRef}
-        className='fixed pointer-events-none z-20 rounded-full bg-black'
+        className='fixed pointer-events-none z-20 rounded-full bg-white'
         style={{
           top: 0,
           left: 0,
           transform: 'translate(-9999px, -9999px)',
-          border: '3px solid #3dff23',
+          border: '3px solid #9f9fa9', // TODO: use tailwind color zinc-400
           willChange: 'transform, width, height',
         }}
       />
       {/* Eyes */}
       <div
         ref={eye0Ref}
-        className='fixed pointer-events-none z-20 rounded-full bg-[#3dff23]'
+        className='fixed pointer-events-none z-20 rounded-full bg-zinc-400'
         style={{ top: 0, left: 0, transform: 'translate(-9999px, -9999px)', willChange: 'transform, width, height' }}
       />
       <div
         ref={eye1Ref}
-        className='fixed pointer-events-none z-20 rounded-full bg-[#3dff23]'
+        className='fixed pointer-events-none z-20 rounded-full bg-zinc-400'
         style={{ top: 0, left: 0, transform: 'translate(-9999px, -9999px)', willChange: 'transform, width, height' }}
       />
     </>
