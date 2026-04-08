@@ -153,7 +153,7 @@ export default function IntroBlurb({ ballPosRef, containerRef }: IntroBlurbProps
       {lines.map((line, i) => (
         <span
           key={i}
-          className='absolute font-mono text-zinc-300 whitespace-pre'
+          className='absolute font-mono text-black whitespace-pre'
           style={{
             left: line.x,
             top: line.y - FONT_SIZE,
@@ -163,7 +163,7 @@ export default function IntroBlurb({ ballPosRef, containerRef }: IntroBlurbProps
           {line.text}
         </span>
       ))}
-      <span className='absolute font-mono text-zinc-600 tracking-widest uppercase top-20 left-1/2 -translate-1/2'>
+      <span className='absolute font-mono text-zinc-400 tracking-widest uppercase top-50 left-1/2 -translate-1/2'>
         {HINT}
       </span>
     </div>

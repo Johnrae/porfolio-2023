@@ -170,7 +170,7 @@ export default function GhostBall({ x, y, ballPosRef }: GhostBallProps) {
             ctx.fillStyle = `rgba(0,0,0,${opacity})`
             ctx.fill()
             ctx.lineWidth = borderW
-            ctx.strokeStyle = `rgba(255,255,255,${opacity})`
+            ctx.strokeStyle = `rgba(61,255,35,${opacity})`
             ctx.stroke()
           })
 
@@ -204,19 +204,19 @@ export default function GhostBall({ x, y, ballPosRef }: GhostBallProps) {
           top: 0,
           left: 0,
           transform: 'translate(-9999px, -9999px)',
-          border: '3px solid white',
+          border: '3px solid #3dff23',
           willChange: 'transform, width, height',
         }}
       />
       {/* Eyes */}
       <div
         ref={eye0Ref}
-        className='fixed pointer-events-none z-20 rounded-full bg-white'
+        className='fixed pointer-events-none z-20 rounded-full bg-[#3dff23]'
         style={{ top: 0, left: 0, transform: 'translate(-9999px, -9999px)', willChange: 'transform, width, height' }}
       />
       <div
         ref={eye1Ref}
-        className='fixed pointer-events-none z-20 rounded-full bg-white'
+        className='fixed pointer-events-none z-20 rounded-full bg-[#3dff23]'
         style={{ top: 0, left: 0, transform: 'translate(-9999px, -9999px)', willChange: 'transform, width, height' }}
       />
     </>
